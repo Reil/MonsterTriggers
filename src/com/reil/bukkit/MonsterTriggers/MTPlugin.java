@@ -30,10 +30,11 @@ public class MTPlugin extends JavaPlugin {
 		
 	}
 	public void register() {
-		if (registered = false) {
+		if (registered == false) {
 			Server MCServer = getServer();
 			PluginManager loader = MCServer.getPluginManager();
 			loader.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Event.Priority.Monitor, this);
+			registered = true;
 		}
 	}
 	private class Listener extends ServerListener {
@@ -46,7 +47,6 @@ public class MTPlugin extends JavaPlugin {
     			entityListener = new MTListener((rTriggers)event.getPlugin());
     			/* register events */
     			register();
-    			registered = true;
     			log.info("MonsterTriggers loaded!");
             }
         }
