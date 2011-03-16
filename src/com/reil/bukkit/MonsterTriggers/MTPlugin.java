@@ -8,6 +8,7 @@ import org.bukkit.event.Event.Priority;
 import org.bukkit.event.entity.EntityListener;
 import org.bukkit.event.server.PluginEvent;
 import org.bukkit.event.server.ServerListener;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import com.reil.bukkit.rTriggers.rTriggers;
@@ -23,6 +24,14 @@ public class MTPlugin extends JavaPlugin {
 		Server MCServer = getServer();
 		PluginManager loader = MCServer.getPluginManager();
 		loader.registerEvent(Event.Type.PLUGIN_ENABLE, listener, Priority.Monitor, this);
+		Plugin rTriggers = MCServer.getPluginManager().getPlugin("rTriggers");
+        if(rTriggers != null ) {
+            log.info("[MonsterTriggers] Attached to rTriggers.");
+			entityListener = new MTListener((rTriggers) rTriggers);
+			/* register events */
+			register();
+			log.info("MonsterTriggers loaded!");
+        }
 	}
 	@Override
 	public void onDisable() {

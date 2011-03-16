@@ -96,7 +96,7 @@ public class MTListener extends EntityListener {
 		}
 		String [] replaceThese = {"<<damage-cause>>"};
 		String [] withThese = {damageCause};
-		rTriggers.triggerMessagesWithOption("ondamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
-		rTriggers.triggerMessagesWithOption("ondamage|" + damaged,replaceThese,withThese);
+		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
+		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged,replaceThese,withThese);
 	}
 }
