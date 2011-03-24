@@ -24,7 +24,6 @@ public class MTListener extends EntityListener {
 		if (reason == TargetReason.CLOSEST_PLAYER ||
 				reason == TargetReason.TARGET_ATTACKED_ENTITY ||
 				reason == TargetReason.PIG_ZOMBIE_TARGET){
-			log.info("Entity changing targets.");
 			if (target instanceof Player){
 				Player targetPlayer =(Player) target;
 				String targeter = event.getEntity().getClass().getName();
