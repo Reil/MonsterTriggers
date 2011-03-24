@@ -25,6 +25,7 @@ public class MTListener extends EntityListener {
 				reason == TargetReason.TARGET_ATTACKED_ENTITY ||
 				reason == TargetReason.PIG_ZOMBIE_TARGET){
 			if (target instanceof Player){
+				if (((Player) target).getHealth() == 0) return;
 				Player targetPlayer =(Player) target;
 				String targeter = event.getEntity().getClass().getName();
 				targeter = targeter.substring(targeter.lastIndexOf("Craft") + "Craft".length());
