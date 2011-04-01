@@ -6,7 +6,7 @@ import org.bukkit.Server;
 import org.bukkit.event.Event;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.entity.EntityListener;
-import org.bukkit.event.server.PluginEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
@@ -50,7 +50,7 @@ public class MTPlugin extends JavaPlugin {
 
         public Listener() { }
 
-        public void onPluginEnabled(PluginEvent event) {
+        public void onPluginEnable(PluginEnableEvent event) {
             if(event.getPlugin().getDescription().getName().equals("rTriggers")) {
                 log.info("[MonsterTriggers] Attached to rTriggers.");
     			entityListener = new MTListener((rTriggers)event.getPlugin());
