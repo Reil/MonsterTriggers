@@ -1,5 +1,6 @@
 package com.reil.bukkit.MonsterTriggers;
 
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.bukkit.entity.*;
@@ -9,8 +10,9 @@ import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 import com.reil.bukkit.rTriggers.rTriggers;
 
 public class MTListener extends EntityListener {
-	private final rTriggers rTriggers;
+	rTriggers rTriggers;
 	Logger log = Logger.getLogger("Minecraft");
+	HashMap<Integer, Integer> targetMap = new HashMap<Integer, Integer>();
 
 	/**
 	 * @param rTriggers
@@ -19,22 +21,29 @@ public class MTListener extends EntityListener {
 		this.rTriggers = rTriggers;
 	}
 	public void onEntityTarget (EntityTargetEvent event){
+		int previousTarget;
 		Entity target = event.getTarget();
+		Entity targeter = event.getEntity();
 		TargetReason reason = event.getReason();
 		if (reason == TargetReason.CLOSEST_PLAYER ||
 				reason == TargetReason.TARGET_ATTACKED_ENTITY ||
 				reason == TargetReason.PIG_ZOMBIE_TARGET){
-			if (target instanceof Player){
+			if (targetMap.containsKey(targeter.getEntityId()))
+				previousTarget = targetMap.get(targeter.getEntityId());
+			else
+				previousTarget = target.getEntityId() - 1;
+			if (target instanceof Player && previousTarget != target.getEntityId()){
 				if (((Player) target).getHealth() == 0) return;
+				targetMap.put(targeter.getEntityId(),target.getEntityId());
 				Player targetPlayer =(Player) target;
-				String targeter = event.getEntity().getClass().getName();
-				targeter = targeter.substring(targeter.lastIndexOf("Craft") + "Craft".length());
+				String targeterName = targeter.getClass().getName();
+				targeterName = targeterName.substring(targeterName.lastIndexOf("Craft") + "Craft".length());
 				String[] eventToReplace =  {"<<targeter>>"};
-				String []eventReplaceWith = {targeter};
+				String []eventReplaceWith = {targeterName};
 				rTriggers.triggerMessagesWithOption("targetsplayer", eventToReplace, eventReplaceWith);
-				rTriggers.triggerMessagesWithOption("targetsplayer|" + targeter,eventToReplace,eventReplaceWith);
+				rTriggers.triggerMessagesWithOption("targetsplayer|" + targeterName,eventToReplace,eventReplaceWith);
 				rTriggers.triggerMessagesWithOption(targetPlayer, "targetsplayer", eventToReplace, eventReplaceWith);
-				rTriggers.triggerMessagesWithOption(targetPlayer, "targetsplayer|" + targeter,eventToReplace,eventReplaceWith);
+				rTriggers.triggerMessagesWithOption(targetPlayer, "targetsplayer|" + targeterName,eventToReplace,eventReplaceWith);
 			}
 		}
 	}
@@ -97,6 +106,6 @@ public class MTListener extends EntityListener {
 		String [] replaceThese = {"<<damage-cause>>"};
 		String [] withThese = {damageCause};
 		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
-		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged,replaceThese,withThese);
+		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged                      ,replaceThese,withThese);
 	}
 }
