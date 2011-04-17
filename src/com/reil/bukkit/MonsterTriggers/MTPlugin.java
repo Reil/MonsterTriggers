@@ -43,7 +43,7 @@ public class MTPlugin extends JavaPlugin {
 			PluginManager loader = MCServer.getPluginManager();
 			loader.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Event.Priority.Monitor, this);
 			loader.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Event.Priority.Monitor, this);
-			//getServer().getScheduler().scheduleSyncRepeatingTask(this, new MTCleaner(entityListener), 20, 6000);
+			getServer().getScheduler().scheduleSyncRepeatingTask(this, new MTCleaner(entityListener), 20, 6000);
 			registered = true;
 		}
 	}
