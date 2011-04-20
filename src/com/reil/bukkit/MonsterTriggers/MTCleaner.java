@@ -8,7 +8,6 @@ public class MTCleaner implements Runnable {
 	}
 	@Override
 	public void run() {
-		System.out.println("Cleaning MonsterTrigger hashmap...");
 		Listener.targetMap.clear();
 	}
 
