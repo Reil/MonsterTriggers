@@ -13,6 +13,7 @@ public class MTListener extends EntityListener {
 	rTriggers rTriggers;
 	Logger log = Logger.getLogger("Minecraft");
 	HashMap<Integer, Integer> targetMap = new HashMap<Integer, Integer>();
+	HashMap<Integer, String> killerMap = new HashMap<Integer, String>();
 
 	/**
 	 * @param rTriggers
@@ -20,6 +21,8 @@ public class MTListener extends EntityListener {
 	MTListener(rTriggers rTriggers) {
 		this.rTriggers = rTriggers;
 	}
+	
+	@Override
 	public void onEntityTarget (EntityTargetEvent event){
 		int previousTarget;
 		Entity target = event.getTarget();
@@ -47,55 +50,49 @@ public class MTListener extends EntityListener {
 			}
 		}
 	}
+	
+	@Override
 	public void onEntityDamage(EntityDamageEvent event ){
 		String damageCause; 
 		String triggerOption;
-		if (event.getEntity() instanceof Player) return;
-		String damaged = event.getEntity().getClass().getName();
-		damaged = damaged.substring(damaged.lastIndexOf("Craft") + "Craft".length());
+		Entity gotHurt = event.getEntity();
+		if (gotHurt instanceof Player) return;
+		
+		String damaged = gotHurt.getClass().getName();
+		damaged = damaged.substring(damaged.lastIndexOf("Craft") + 5);
+		triggerOption = event.getCause().toString().toLowerCase();
 		switch (event.getCause()) {
 			case CONTACT:
-				triggerOption = "contact";
 				damageCause = "touching something";
 				break;
 			case ENTITY_ATTACK:
-				triggerOption = "entity_attack";
 				damageCause = "being hit";
 				break;
 			case SUFFOCATION:
-				triggerOption = "suffocation";
 				damageCause = "suffocation";
 				break;
 			case FALL:
-				triggerOption = "fall";
 				damageCause = "falling";
 				break;
 			case FIRE:
-				triggerOption = "fire";
 				damageCause = "fire";
 				break;
 			case FIRE_TICK:
-				triggerOption = "fire_tick";
 				damageCause = "burning";
 				break;
 			case LAVA:
-				triggerOption = "lava";
 				damageCause = "lava";
 				break;
 			case DROWNING:
-				triggerOption = "drowning";
 				damageCause = "drowning";
 				break;
 			case BLOCK_EXPLOSION:
-				triggerOption = "block_explosion";
 				damageCause = "explosion";
 				break;
 			case ENTITY_EXPLOSION:
-				triggerOption = "entity_explosion";
 				damageCause = "creeper";
 				break;
 			case CUSTOM:
-				triggerOption = "custom";
 				damageCause = "the unknown";
 				break;
 			default:
@@ -107,5 +104,30 @@ public class MTListener extends EntityListener {
 		String [] withThese = {damageCause};
 		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
 		rTriggers.triggerMessagesWithOption("mobdamage|" + damaged                      ,replaceThese,withThese);
+		
+		if (event instanceof EntityDamageByEntityEvent && ((EntityDamageByEntityEvent)event).getDamager() instanceof Player) {
+			killerMap.put(gotHurt.getEntityId(),
+					((Player) ((EntityDamageByEntityEvent)event).getDamager()).getName());
+		} else killerMap.remove(gotHurt.getEntityId());
+	}
+	
+	
+	@Override
+	public void onEntityDeath(EntityDeathEvent event){
+		Entity isDead = event.getEntity();
+		if (isDead instanceof Player) return;
+		int deadId = isDead.getEntityId();
+		String deadMob = isDead.getClass().getName();
+		deadMob = deadMob.substring(deadMob.lastIndexOf("Craft") + 5);
+		if (killerMap.containsKey(deadId)){
+			Player killer = rTriggers.getServer().getPlayer(killerMap.get(deadId));
+			String murderWeapon = killer.getItemInHand().getType().toString().toLowerCase().replace("_", " ");
+			if (murderWeapon.equals("air")) murderWeapon = "fist";
+			String [] replaceThese = {"<<weapon>>", "<<mob>>"};
+			String [] withThese    = {murderWeapon, deadMob};
+			
+			rTriggers.triggerMessagesWithOption(killer, "mobkilledbyplayer",replaceThese,withThese);
+			rTriggers.triggerMessagesWithOption(killer, "mobkilledbyplayer|" + deadMob,replaceThese,withThese);
+		}
 	}
 }

@@ -19,6 +19,7 @@ public class MTPlugin extends JavaPlugin {
 	MTListener entityListener;
 	Logger log = Logger.getLogger("Minecraft");
 	
+	@Override
 	public void onEnable(){
 		Server MCServer = getServer();
 		PluginManager loader = MCServer.getPluginManager();
@@ -43,6 +44,7 @@ public class MTPlugin extends JavaPlugin {
 			PluginManager loader = MCServer.getPluginManager();
 			loader.registerEvent(Event.Type.ENTITY_TARGET, entityListener, Event.Priority.Monitor, this);
 			loader.registerEvent(Event.Type.ENTITY_DAMAGE, entityListener, Event.Priority.Monitor, this);
+			loader.registerEvent(Event.Type.ENTITY_DEATH, entityListener, Event.Priority.Monitor, this);
 			getServer().getScheduler().scheduleSyncRepeatingTask(this, new MTCleaner(entityListener), 20, 6000);
 			registered = true;
 		}
@@ -51,7 +53,8 @@ public class MTPlugin extends JavaPlugin {
 	private class Listener extends ServerListener {
 
         public Listener() { }
-
+        
+        @Override
         public void onPluginEnable(PluginEnableEvent event) {
             if(event.getPlugin().getDescription().getName().equals("rTriggers")) {
                 log.info("[MonsterTriggers] Attached to rTriggers.");

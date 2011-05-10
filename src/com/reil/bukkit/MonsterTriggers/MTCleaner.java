@@ -9,6 +9,7 @@ public class MTCleaner implements Runnable {
 	@Override
 	public void run() {
 		Listener.targetMap.clear();
+		Listener.killerMap.clear();
 	}
 
 }
