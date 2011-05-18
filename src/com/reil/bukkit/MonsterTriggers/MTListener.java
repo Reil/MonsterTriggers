@@ -27,6 +27,7 @@ public class MTListener extends EntityListener {
 		int previousTarget;
 		Entity target = event.getTarget();
 		Entity targeter = event.getEntity();
+		String targeterName = rTriggers.getName(targeter);
 		TargetReason reason = event.getReason();
 		if (reason == TargetReason.CLOSEST_PLAYER ||
 				reason == TargetReason.TARGET_ATTACKED_ENTITY ||
@@ -38,18 +39,24 @@ public class MTListener extends EntityListener {
 			if (target instanceof Player && previousTarget != target.getEntityId()){
 				if (((Player) target).getHealth() == 0) return;
 				targetMap.put(targeter.getEntityId(),target.getEntityId());
-				Player targetPlayer =(Player) target;
-				String targeterName = targeter.getClass().getName();
-				targeterName = targeterName.substring(targeterName.lastIndexOf("Craft") + "Craft".length());
+				Player targetPlayer = (Player) target;
 				String[] eventToReplace =  {"<<targeter>>"};
 				String []eventReplaceWith = {targeterName};
-				rTriggersPlugin.triggerMessages("targetsplayer", eventToReplace, eventReplaceWith);
-				rTriggersPlugin.triggerMessages("targetsplayer|" + targeterName,eventToReplace,eventReplaceWith);
 				rTriggersPlugin.triggerMessages(targetPlayer, "targetsplayer", eventToReplace, eventReplaceWith);
 				rTriggersPlugin.triggerMessages(targetPlayer, "targetsplayer|" + targeterName,eventToReplace,eventReplaceWith);
 			}
+		} else if (reason == TargetReason.FORGOT_TARGET) {
+			previousTarget = targetMap.get(targeter.getEntityId());
+			Entity oldTarget = rTriggers.getEntityById(previousTarget, targeter.getWorld());
+			if (!(oldTarget instanceof Player)) return;
+			String[] eventToReplace =  {"<<targeter>>"};
+			String []eventReplaceWith = {targeterName};
+			rTriggersPlugin.triggerMessages((Player) oldTarget, "losesplayer",eventToReplace,eventReplaceWith);
+			rTriggersPlugin.triggerMessages((Player) oldTarget, "losesplayer|" + targeterName,eventToReplace,eventReplaceWith);			
 		}
 	}
+	
+	
 	
 	@Override
 	public void onEntityDamage(EntityDamageEvent event ){
@@ -62,11 +69,6 @@ public class MTListener extends EntityListener {
 		triggerOption = event.getCause().toString().toLowerCase();
 		damageCause = rTriggers.damageCauseNatural(event.getCause());
 		
-		String [] replaceThese = {"<<damage-cause>>"};
-		String [] withThese = {damageCause};
-		rTriggersPlugin.triggerMessages("mobdamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
-		rTriggersPlugin.triggerMessages("mobdamage|" + damaged                      ,replaceThese,withThese);
-		
 		if (event instanceof EntityDamageByEntityEvent) {
 			Entity damager = ((EntityDamageByEntityEvent)event).getDamager();
 			if (damager instanceof Player)
@@ -74,6 +76,11 @@ public class MTListener extends EntityListener {
 			else if (gotHurt instanceof Player)
 				killerMap.put(gotHurt.getEntityId(), damager.getClass().getName().substring(damager.getClass().getName().lastIndexOf("Craft") + 5));
 		} else killerMap.remove(gotHurt.getEntityId());
+		
+		String [] replaceThese = {"<<damage-cause>>"};
+		String [] withThese = {damageCause};
+		rTriggersPlugin.triggerMessages("mobdamage|" + damaged + "|" + triggerOption,replaceThese,withThese);
+		rTriggersPlugin.triggerMessages("mobdamage|" + damaged                      ,replaceThese,withThese);
 	}
 	
 	
@@ -88,8 +95,13 @@ public class MTListener extends EntityListener {
 			String [] replaceThese = {"<<killer>>"};
 			String [] withThese    = {killer};
 			
-			rTriggersPlugin.triggerMessages(isDeadP, "playerkilledbymob",replaceThese,withThese);
-			rTriggersPlugin.triggerMessages(isDeadP, "playerkilledbymob|" + killer,replaceThese,withThese);
+			if (rTriggersPlugin.triggerMessages(isDeadP, "playerkilledbymob",replaceThese,withThese) |
+					rTriggersPlugin.triggerMessages(isDeadP, "playerkilledbymob|" + killer,replaceThese,withThese)){
+				log.info("[MonsterTriggers] Outdated option: playerkilledbymob.  Please use mobkillsplayer instead;");
+			}
+			
+			rTriggersPlugin.triggerMessages(isDeadP, "mobkillsplayer",replaceThese,withThese);
+			rTriggersPlugin.triggerMessages(isDeadP, "mobkillsplayer|" + killer,replaceThese,withThese);
 		} else {
 			String deadMob = isDead.getClass().getName();
 			deadMob = deadMob.substring(deadMob.lastIndexOf("Craft") + 5);
@@ -100,10 +112,23 @@ public class MTListener extends EntityListener {
 			String [] replaceThese = {"<<weapon>>", "<<mob>>"};
 			String [] withThese    = {murderWeapon, deadMob};
 			
-			rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer",replaceThese,withThese);
-			rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer|" + deadMob,replaceThese,withThese);
-			rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer|" + deadMob  + "|" + murderWeapon,replaceThese,withThese);
-		
+			if (rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer",replaceThese,withThese) |
+					rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer|" + deadMob,replaceThese,withThese)|
+					rTriggersPlugin.triggerMessages(killer, "mobkilledbyplayer|" + deadMob  + "|" + murderWeapon,replaceThese,withThese)){
+				log.info("[MonsterTriggers] Outdated option: mobkilledbyplayer.  Please use playerkillsmob instead;");
+			}
+			
+			rTriggersPlugin.triggerMessages(killer, "playerkillsmob",replaceThese,withThese);
+			rTriggersPlugin.triggerMessages(killer, "playerkillsmob|" + deadMob,replaceThese,withThese);
+			rTriggersPlugin.triggerMessages(killer, "playerkillsmob|" + deadMob  + "|" + murderWeapon,replaceThese,withThese);
 		}
+	}
+	@Override
+	public void onExplosionPrime(ExplosionPrimeEvent event){
+		if (!(event.getEntity() instanceof Creeper)) return; // Should not ever happen. o_o
+		Creeper gonnaBlow = (Creeper) event.getEntity();
+		if (!(gonnaBlow.getTarget() instanceof Player)) return;
+		Player target = (Player) gonnaBlow.getTarget();
+		rTriggersPlugin.triggerMessages(target, "creeperfuse");
 	}
 }
