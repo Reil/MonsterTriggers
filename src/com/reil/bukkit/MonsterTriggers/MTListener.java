@@ -4,12 +4,14 @@ import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.bukkit.entity.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityTargetEvent.TargetReason;
 
 import com.reil.bukkit.rTriggers.rTriggers;
 
-public class MTListener extends EntityListener {
+public class MTListener implements Listener {
 	rTriggers rTriggersPlugin;
 	Logger log = Logger.getLogger("Minecraft");
 	HashMap<Integer, Integer> targetMap = new HashMap<Integer, Integer>();
@@ -22,7 +24,7 @@ public class MTListener extends EntityListener {
 		this.rTriggersPlugin = rTriggers;
 	}
 	
-	@Override
+	@EventHandler
 	public void onEntityTarget (EntityTargetEvent event){
 		int previousTarget;
 		Entity target = event.getTarget();
@@ -45,27 +47,18 @@ public class MTListener extends EntityListener {
 				rTriggersPlugin.triggerMessages(targetPlayer, "targetsplayer", eventToReplace, eventReplaceWith);
 				rTriggersPlugin.triggerMessages(targetPlayer, "targetsplayer|" + targeterName,eventToReplace,eventReplaceWith);
 			}
-		} else if (reason == TargetReason.FORGOT_TARGET) {
-			previousTarget = targetMap.get(targeter.getEntityId());
-			Entity oldTarget = rTriggers.getEntityById(previousTarget, targeter.getWorld());
-			if (!(oldTarget instanceof Player)) return;
-			String[] eventToReplace =  {"<<targeter>>"};
-			String []eventReplaceWith = {targeterName};
-			rTriggersPlugin.triggerMessages((Player) oldTarget, "losesplayer",eventToReplace,eventReplaceWith);
-			rTriggersPlugin.triggerMessages((Player) oldTarget, "losesplayer|" + targeterName,eventToReplace,eventReplaceWith);			
 		}
 	}
 	
 	
 	
-	@Override
+	@EventHandler
 	public void onEntityDamage(EntityDamageEvent event ){
 		String damageCause; 
 		String triggerOption;
 		Entity gotHurt = event.getEntity();
 		
-		String damaged = gotHurt.getClass().getName();
-		damaged = damaged.substring(damaged.lastIndexOf("Craft") + 5);
+		String damaged = rTriggers.getName(gotHurt);
 		triggerOption = event.getCause().toString().toLowerCase();
 		damageCause = rTriggers.damageCauseNatural(event.getCause());
 		
@@ -74,7 +67,7 @@ public class MTListener extends EntityListener {
 			if (damager instanceof Player)
 				killerMap.put(gotHurt.getEntityId(), ((Player) damager).getName());
 			else if (gotHurt instanceof Player)
-				killerMap.put(gotHurt.getEntityId(), damager.getClass().getName().substring(damager.getClass().getName().lastIndexOf("Craft") + 5));
+				killerMap.put(gotHurt.getEntityId(), rTriggers.getName(damager));
 		} else killerMap.remove(gotHurt.getEntityId());
 		
 		String [] replaceThese = {"<<damage-cause>>"};
@@ -84,7 +77,7 @@ public class MTListener extends EntityListener {
 	}
 	
 	
-	@Override
+	@EventHandler
 	public void onEntityDeath(EntityDeathEvent event){
 		Entity isDead = event.getEntity();
 		int deadId = isDead.getEntityId();
@@ -103,10 +96,10 @@ public class MTListener extends EntityListener {
 			rTriggersPlugin.triggerMessages(isDeadP, "mobkillsplayer",replaceThese,withThese);
 			rTriggersPlugin.triggerMessages(isDeadP, "mobkillsplayer|" + killer,replaceThese,withThese);
 		} else {
-			String deadMob = isDead.getClass().getName();
-			deadMob = deadMob.substring(deadMob.lastIndexOf("Craft") + 5);
+			String deadMob = rTriggers.getName(isDead);
 		
 			Player killer = rTriggersPlugin.getServer().getPlayer(killerMap.get(deadId));
+			if (killer == null) return;
 			String murderWeapon = killer.getItemInHand().getType().toString().toLowerCase().replace("_", " ");
 			if (murderWeapon.equals("air")) murderWeapon = "fist";
 			String [] replaceThese = {"<<weapon>>", "<<mob>>"};
@@ -123,12 +116,16 @@ public class MTListener extends EntityListener {
 			rTriggersPlugin.triggerMessages(killer, "playerkillsmob|" + deadMob  + "|" + murderWeapon,replaceThese,withThese);
 		}
 	}
-	@Override
+	
+	@EventHandler
 	public void onExplosionPrime(ExplosionPrimeEvent event){
+		log.info("Explosion primed!");
 		if (!(event.getEntity() instanceof Creeper)) return; // Should not ever happen. o_o
 		Creeper gonnaBlow = (Creeper) event.getEntity();
 		if (!(gonnaBlow.getTarget() instanceof Player)) return;
 		Player target = (Player) gonnaBlow.getTarget();
+		
 		rTriggersPlugin.triggerMessages(target, "creeperfuse");
+		event.setCancelled(rTriggersPlugin.triggerMessages(target, "creeperfuse|override"));
 	}
 }
